@@ -1,0 +1,122 @@
+#import <Foundation/Foundation.h>
+
+@interface HttpRequest : NSObject
+
+@property (strong, nonatomic) NSMutableArray *requestHeaderArray;
+@property (strong, nonatomic) NSData * requestBodyData;
+@property (strong, nonatomic) NSURL *requestUrl;
+
+-(id)initWithHeaderAndBody :(NSDictionary *)body error :(NSError **)error;
+-(id) setURL :(NSString *)url;
+
+@end
+
+
+#import "HttpRequest.h"
+#import "HttpRequestElement.h"
+
+@implementation HttpRequest
+{
+    HttpRequestElement *httpRequestElement;
+}
+@synthesize requestHeaderArray;
+@synthesize requestBodyData;
+@synthesize requestUrl;
+
+-(id)initWithHeaderAndBody :(NSDictionary *)body error :(NSError **)error
+{
+    requestHeaderArray = [[NSMutableArray alloc] init];
+    if (body != nil)
+    {
+        requestBodyData = [self parseDataFromDictionary:body error:error];
+    }
+    
+    httpRequestElement = [[HttpRequestElement alloc] init];
+    httpRequestElement.key = @"Content-Type";
+    httpRequestElement.value = @"application/json";
+    [requestHeaderArray addObject:httpRequestElement];
+    
+    return self;
+}
+
+-(id) setURL :(NSString *)url
+{
+    requestUrl = [NSURL URLWithString:url];
+    
+    return self;
+}
+
+
+-(NSDictionary *) parseJsonFromWebService:(NSData *)pResponseData error:(NSError **)pError
+{
+    NSDictionary* json;
+    if (pResponseData != nil)
+    {
+        json = [NSJSONSerialization JSONObjectWithData:pResponseData
+                                               options:kNilOptions
+                                                 error:pError];
+    }
+    else
+    {
+        json = nil;
+    }
+    
+    return json;
+}
+
+// Handling parsing for different WebService Requests
+-(NSData *) parseDataFromDictionary:(NSDictionary *)requestDict error:(NSError **)pError
+{
+    NSData *dataFromDict = [NSJSONSerialization dataWithJSONObject:requestDict
+                                                           options:NSJSONWritingPrettyPrinted
+                                                             error:pError];
+    
+    return dataFromDict;
+}
+
+@end
+
+
+
+#import <Foundation/Foundation.h>
+
+@interface HttpRequestElement : NSObject
+
+@property (strong, nonatomic) NSString *key;
+@property (strong, nonatomic) NSString *value;
+
+@end
+
+#import "HttpRequestElement.h"
+
+@implementation HttpRequestElement
+
+@synthesize key, value;
+
+@end
+
+
+
+
+#import <Foundation/Foundation.h>
+#import "HttpRequest.h"
+#import <UIKit/UIKit.h>
+
+#define ATTRIBUTE_ALLOC __attribute__((unavailable("alloc not available")))
+#define ATTRIBUTE_INIT __attribute__((unavailable("init not available")))
+#define ATTRIBUTE_NEW __attribute__((unavailable("new not available")))
+#define ATTRIBUTE_COPY __attribute__ ((unavailable("copy not available")))
+
+@interface WebServiceManager : NSObject
+
++(instancetype)getWebServiceInstance;
++(instancetype)alloc ATTRIBUTE_ALLOC;
+-(instancetype)init ATTRIBUTE_INIT;
++(instancetype)new ATTRIBUTE_NEW;
++(instancetype)copy ATTRIBUTE_COPY;
+
+// WebService Methods
++(NSData *)hitPOSTRequest :(HttpRequest *)httpRequest withError : (NSError **)error;
++(NSData *)hitGETRequest :(HttpRequest *)httpRequest withError : (NSError **)error;
+
+@end
